@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2086
 # Handler script to encrypt OSSEC alerts prior to mailing.
 # Called via the `.procmailrc` for user `ossec`.
 
@@ -44,7 +43,7 @@ function send_encrypted_alert() {
     # failure message.
     encrypted_alert_text="$(printf "%s" "${ossec_alert_text}" | \
         /usr/bin/formail -I '' | \
-        /usr/bin/gpg --homedir /var/ossec/.gnupg --trust-model always -ear $gpg_fpr)"
+        /usr/bin/gpg --homedir /var/ossec/.gnupg --trust-model always -ear "$gpg_fpr")"
 
     # Error handling.
     if [[ -z "${encrypted_alert_text}" || $? -ne 0 ]]; then
