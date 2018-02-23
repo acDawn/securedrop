@@ -14,10 +14,15 @@ function main() {
     count=$(echo "$stdin" | perl -ne 'print scalar(<>) and exit if(/ossec: output/);')
     if [[ "$count" =~ ^[0-9]+$ ]] ; then
         export SUBJECT="Submissions in the past 24h"
+        #
+        # whitespaces below are so the size of both messages are exactly the same
+        #
         if [[ "$count" -gt "0" ]] ; then
-            printf "Submissions are waiting"
+            echo "There has been submission activity in the past 24 hours.   "
+            echo "You should login and check SecureDrop. "
         else
-            printf "NO submissions received"
+            echo "There has been no submission activity in the past 24 hours."
+            echo "You do not need to login to SecureDrop."
         fi | $sender journalist
     else
         export SUBJECT="SecureDrop Submissions Error"

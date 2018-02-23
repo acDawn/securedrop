@@ -3,6 +3,7 @@
 
 import argparse
 import codecs
+import datetime
 import logging
 import os
 import pwd
@@ -17,15 +18,16 @@ import version
 
 from flask import current_app
 from os.path import dirname, join, realpath
-from sqlalchemy import text
+from sqlalchemy import text, create_engine
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import sessionmaker
 
 os.environ['SECUREDROP_ENV'] = 'dev'  # noqa
 import config
 import journalist_app
 
 from db import db
-from models import Journalist, PasswordError, InvalidUsernameException
+from models import Source, Journalist, PasswordError, InvalidUsernameException
 from management.run import run
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
@@ -400,11 +402,24 @@ def init_db(args):
 
 
 def how_many_submissions_today(args):
+    if config.DATABASE_ENGINE == "sqlite":
+        db_uri = (config.DATABASE_ENGINE + ":///" +
+                  config.DATABASE_FILE)
+    else:
+        db_uri = (
+            config.DATABASE_ENGINE + '://' +
+            config.DATABASE_USERNAME + ':' +
+            config.DATABASE_PASSWORD + '@' +
+            config.DATABASE_HOST + '/' +
+            config.DATABASE_NAME
+        )
+    session = sessionmaker(bind=create_engine(db_uri))()
+    something = session.query(Source).filter(
+        Source.last_updated >
+        datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+    ).count() > 0
     count_file = os.path.join(args.data_root, 'submissions_today.txt')
-    sh("""
-    find {dir} -type f -a -mmin -1440 | wc -l > {count_file}
-    """.format(dir=args.store_dir,
-               count_file=count_file))
+    open(count_file, 'w').write(something and '1' or '0')
 
 
 def get_args():
